@@ -1,0 +1,23 @@
+Source: cubicweb-schiirdor
+Section: web
+Priority: optional
+Maintainer: NSAp (CEA, FRANCE) <antoine.grigis@cea.fr>
+Build-Depends:
+ debhelper (>= 7),
+ python (>= 2.6.5),
+Standards-Version: 3.9.3
+X-Python-Version: >= 2.6
+
+Package: cubicweb-schiirdor
+Architecture: all
+Depends:
+ cubicweb-common (>= 3.20.9),
+ ${python:Depends},
+ ${misc:Depends},
+Description: This cube provides a public registration feature (anonymous users can register and create an account without the need for admin intervention).
+ CubicWeb is a semantic web application framework.
+ .
+ This cube provides a public registration feature (anonymous users can register and create an account without the need for admin intervention).
+ .
+ This package will install all the components you need to run the
+ cubicweb-schiirdor application (cube :)..
