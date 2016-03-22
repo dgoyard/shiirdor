@@ -40,6 +40,10 @@ class InGroupHook(hook.Hook):
     events = ("before_add_relation", "before_delete_relation")
 
     def __call__(self):
+        """ Before an 'in_group' relation deletion or addition, check the
+        assocaited group name: can't modifiy managers, users, guests and
+        moderators group associated unless you are administrator.
+        """
         parent = self._cw.entity_from_eid(self.eidto)
         child = self._cw.entity_from_eid(self.eidfrom)
         group_name = parent.name
@@ -51,17 +55,20 @@ class InGroupHook(hook.Hook):
 
 
 class ExternalAuthSourceHook(hook.Hook):
-    """ On startup ask for a login/password to contact the external
-    authentification ldap based system.
+    """ On startup ask for a login/password to contact the external destination
+    authentification ldap based system. If not already specified create
+    a 'SCHIIRDOR_SOURCE' and a 'SCHIIRDOR_DESTINATION' sources.
+
+    This class raise a 'ConfigurationError' if a secret key with
+    0 < len(key) <= 32 is not specified.
     """
     __regid__ = "external-auth-source-hook"
     events = ("server_startup", )
 
     def __call__(self):
-        """ Create an 'ExternalAuthSourceHook' instance.
-
-        Important registery parameters are the 'authlogin' and 'authpassword'
-        used to contact the authentification ldap based system.
+        """ Important registery parameters are the 'dest_authlogin' and
+        'dest_authpassword' used to contact the authentification ldap based
+        system.
         """
         # Small hack copied from the trustedauth cube to make sure the secret
         # key file is loaded on both sides of cw (repo and web)
@@ -99,7 +106,6 @@ def set_secret(config, secretfile):
             "Cannot open secret key file. Check your configuration file!")
         return
     if not secret or len(secret) > 32:
-        print secret, len(secret)
         raise ConfigurationError(
             "Secret key must me a string 0 < len(key) <= 32.")
     config._secret = secret.ljust(32, "#")

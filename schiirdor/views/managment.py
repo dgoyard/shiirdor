@@ -27,7 +27,8 @@ from cubes.trustedauth.cryptutils import build_cypher
 
 
 class SCHIIRDORSyncManagementView(StartupView):
-    """ Synchronize users and groups to a ldap based source.
+    """ Synchronize users and groups to the 'SCHIIRDOR_DESTINATION' ldap based
+    resource.
     """
     __regid__ = "schiirdor.sync-management"
     __select__ = StartupView.__select__ & ~trust_authenticated()
@@ -43,9 +44,9 @@ class SCHIIRDORSyncManagementView(StartupView):
                "X type T, X url U, X config C")
 
     def call(self, **kwargs):
-        """ Start synchronisation with destination source.
+        """ Start synchronisation with destination source: users and associated
+        groups.
         """
-
         # Create a connection to the ldap resource
         cyphr = build_cypher(self._cw.vreg.config._secret)
         login = cyphr.decrypt(
@@ -143,7 +144,7 @@ class SCHIIRDORUserManagementView(StartupView):
 
 
 class SCHIIRDORUsersTable(EntityTableView):
-    """ Display a table with user information to be managed.
+    """ Display a table with the user information to be managed.
     """
     __regid__ = "schiirdor.users-table"
     __select__ = is_instance("CWUser") & ~trust_authenticated()
@@ -190,7 +191,7 @@ class SCHIIRDORGroupsManagementView(StartupView):
 
 
 class SCHIIRDORGroupsTable(EntityTableView):
-    """ Display a table with groups information to be managed.
+    """ Display a table with the groups information to be managed.
     """
     __regid__ = "shiirdor.groups-table"
     __select__ = is_instance("CWGroup") & match_user_groups("managers")
@@ -223,7 +224,7 @@ class SCHIIRDORAdminUsersManagementView(StartupView):
 
 
 class SCHIIRDORAdminUsersTable(EntityTableView):
-    """ Display a table with users information to be managed.
+    """ Display a table with the users information to be managed.
     """
     __regid__ = "shiirdor.admin-users-table"
     __select__ = is_instance("CWUser") & match_user_groups("managers")

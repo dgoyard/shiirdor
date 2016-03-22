@@ -33,6 +33,7 @@ except ImportError:
 
 class AnonRegisterButton(HeaderComponent):
     """ Build a registration button displayed in the header.
+    This button will only be visible if logged as an anonymous user.
     """
     __regid__ = "anon-registration"
     __select__ = HeaderComponent.__select__ & anonymous_user()
@@ -48,6 +49,7 @@ class AnonRegisterButton(HeaderComponent):
 
 class ManagerManageButton(HeaderComponent):
     """ Build a manage button displayed in the header.
+    Only administrators and moderators will see this button.
     """
     __regid__ = "manager-manage"
     __select__ = (HeaderComponent.__select__ & authenticated_user() &
@@ -64,6 +66,7 @@ class ManagerManageButton(HeaderComponent):
 
 class ManagerSyncButton(HeaderComponent):
     """ Build a synchronisation button displayed in the header.
+    Only administrators and moderators will see this button.
     """
     __regid__ = "manager-sync"
     __select__ = (HeaderComponent.__select__ & authenticated_user() &
@@ -80,7 +83,6 @@ class ManagerSyncButton(HeaderComponent):
 
 class AdminStatusButton(HeaderComponent):
     """ Build a status button displayed in the header.
-
     Only the managers have accessed to this functionality.
     """
     __regid__ = "admin-status"

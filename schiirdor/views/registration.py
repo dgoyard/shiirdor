@@ -100,6 +100,7 @@ class RegistrationSendMailController(controller.Controller):
 
         You will have to specify the SMTP host in the instance
         all-in-one.conf file:
+
             smtp-host=mx.intra.cea.fr
         """
         # Check the form content

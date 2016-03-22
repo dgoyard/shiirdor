@@ -23,10 +23,13 @@ class SSOUserRetriever(authentication.WebAuthInfoRetreiver):
     """ Single sign-on (SSO) access control of multiple related, but
     independent software systems. With this property a user logs in with a
     single ID and password to gain access to a connected system or systems
-    without using different usernames or passwords.
+    without using different usernames or passwords. The credentials are
+    checked in the 'SCHIIRDOR_SOURCE' ldap based resource. All the logged
+    users will have a 'trusted_cwuser' attribute attached to thei sessions.
 
-    Special login: 'admin'.
-    Special group: 'moderators'.
+    Special login: 'admin' that is directly authentificated by the CubicWeb
+    authentification system.
+    Special group: 'moderators' that won't have the 'trusted_cwuser' attribute.
     """
     __regid__ = "sso-user-retriever"
     order = 0
@@ -39,8 +42,10 @@ class SSOUserRetriever(authentication.WebAuthInfoRetreiver):
 
     def authentication_information(self, req):
         """ Retrieve authentication information from the given request, raise
-        NoAuthInfo if expected information is not found, return login crypted
-        with secret shared key.
+        NoAuthInfo if expected information is not found.
+
+        Return login and password with secret crypted shared key in the case
+        of sso authentification.
         """
         self.debug("web authenticator building auth info")
         login, password = req.get_authorization()
@@ -55,12 +60,7 @@ class SSOUserRetriever(authentication.WebAuthInfoRetreiver):
 
     def authenticated(self, retriever, req, session, login, authinfo):
         """ Callback when return authentication information have opened a
-        repository connection successfully. Take care req has no session
-        attached yet, hence req.execute isn't available.
-
-        Here we set a flag on the request to indicate that the user is
-        _only_ kerberos authenticated (since cookie login can kick in
-        if needed)
+        repository connection successfully.
         """
         # Nothing to do for admin login
         if login == "admin":
