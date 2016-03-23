@@ -190,6 +190,85 @@ class SCHIIRDORGroupsManagementView(StartupView):
         self.wview('shiirdor.groups-table', self._cw.execute(self.rql))
 
 
+class SCHIIRDORImportView(StartupView):
+    """ Import users and groups from the 'SCHIIRDOR_DESTINATION' ldap resource.
+
+    This mechanism can be used as a backup system in case the database is
+    corrupted.
+    """
+    __regid__ = "shiirdor.users-groups-import"
+    title = _("Import Users&Groups")
+    __select__ = StartupView.__select__ & match_user_groups("managers")
+    cache_max_age = 0 # disable caching
+    src_name = "SCHIIRDOR_DESTINATION"
+    src_rql = ("Any X, T, U, C Where X is CWSource, X name 'SCHIIRDOR_DESTINATION', "
+               "X type T, X url U, X config C")
+
+    def call(self, **kwargs):
+        # Display a title
+        self.w(u"<h1>{0}</h1>".format(self.title))
+
+        # Create a connection to the ldap resource
+        cyphr = build_cypher(self._cw.vreg.config._secret)
+        login = cyphr.decrypt(
+            base64.decodestring(self._cw.vreg.dest_authlogin)).strip()
+        password = cyphr.decrypt(
+            base64.decodestring(self._cw.vreg.dest_authpassword)).strip()
+        with self._cw.session.repo.internal_cnx() as cnx:
+            rset = cnx.execute(self.src_rql)
+        if rset.rowcount != 1:
+            raise Exception("No resource attached to this RQL: "
+                            "{0}.".format(self.src_rql))
+        seid, stype, surl, sconfig = rset[0]
+        if stype != "ldapfeed":
+            raise Exception("Source '{0}' must be of 'ldapfeed' "
+                            "type.".format(self.src_name))
+        connection = LDAPConnection(seid, self.src_name, stype, surl, sconfig,
+                                    login, password)
+
+        # Create missing users and groups entities and in_group relation.
+        groups_data, users_data = connection.dump_users_and_groups()
+        with self._cw.session.repo.internal_cnx() as cnx:
+            for user_info in users_data:
+                req = "Any X WHERE X is CWUser, X login '{0}'".format(
+                    user_info["login"])
+                rset = cnx.execute(req)
+                if rset.rowcount == 0:
+                    print("Creating user '{0}'...".format(user_info["login"]))
+                    req = "INSERT CWUser X: "
+                    for attribute, value in user_info.items():
+                        req += " X %(attribute)s '%(value)s'," % {
+                            "attribute": attribute, "value": value}
+                    req += "X in_group G WHERE G name 'users'"
+                    rset = cnx.execute(req)
+            for group_info in groups_data:
+                grpname = group_info["name"]
+                req = "Any X WHERE X is CWGroup, X name '{0}'".format(grpname)
+                rset = cnx.execute(req)
+                if rset.rowcount == 0:
+                    print("Creating group '{0}'...".format(grpname))
+                    req = "INSERT CWGroup X: X name '{0}'".format(grpname)
+                    rset = cnx.execute(req)
+                members = group_info.get("members", [])
+                if not isinstance(members, list):
+                    members = [members]
+                for login in members:
+                    req = ("Any X WHERE X is CWUser, X login '{0}', "
+                           "X in_group G, G name '{1}'".format(login, grpname))
+                    rset = cnx.execute(req) 
+                    if rset.rowcount == 0:
+                        print("Adding relation '{0}' in_group '{1}'...".format(
+                            login, grpname))
+                        req = ("SET X in_group G WHERE X is CWUser, "
+                               "X login '{0}', G is CWGroup, "
+                               "G name '{1}'".format(login, grpname))
+                        rset = cnx.execute(req)
+            cnx.commit()
+
+        # Close connection
+        connection.close()
+
+
 class SCHIIRDORGroupsTable(EntityTableView):
     """ Display a table with the groups information to be managed.
     """

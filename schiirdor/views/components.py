@@ -98,6 +98,23 @@ class AdminStatusButton(HeaderComponent):
           "</a>".format(_(" Create groups")))
 
 
+class AdminImportButton(HeaderComponent):
+    """ Build an importation button displayed in the header.
+    Only the managers have accessed to this functionality.
+    """
+    __regid__ = "admin-import"
+    __select__ = (HeaderComponent.__select__ & authenticated_user() &
+                  match_user_groups("managers"))
+    context = "header-right"
+
+    def render(self, w):
+        w(u"<a href='{0}' type='button' class='btn btn-default "
+          "btn-sm'>".format(self._cw.build_url(
+                "view", vid="shiirdor.users-groups-import")))
+        w(u"<span class='glyphicon glyphicon-import'>{0}</span>"
+          "</a>".format(_(" Import users&groups")))
+
+
 class LogOutButton(AuthenticatedUserStatus):
     """ Close the current session.
     """
@@ -152,7 +169,7 @@ def render(self, w):
 def registration_callback(vreg):
 
     for bclass in [AnonRegisterButton, ManagerManageButton, AdminStatusButton,
-                   LogOutButton, ManagerSyncButton]:
+                   LogOutButton, ManagerSyncButton, AdminImportButton]:
         vreg.register(bclass)
 
     vreg.unregister(BookmarksBox)
