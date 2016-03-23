@@ -85,7 +85,9 @@ class SCHIIRDORSyncManagementView(StartupView):
                                                     filter_attributes=True)
 
                 # Get the group members
-                members = grp.get("members", "-").split("-")
+                members = grp.get("members", [])
+                if not isinstance(members, list):
+                    members = [members]
 
                 # Create/get the user
                 user = connection.is_valid_login(login)
@@ -135,6 +137,12 @@ class SCHIIRDORUserManagementView(StartupView):
            "U cw_source UDS, US name UDSN")
 
     def call(self, **kwargs):
+        # Add a div around the selector
+        self.w(u"<script>")
+        self.w(u"$( \"select[id^='from_in_group-subject']\" ).wrap("
+                "\"<div class='schiirdor-manage-groups'></div>\");")
+        self.w(u"</script>")
+
         self.w(u"<h1>{0}</h1>".format(self.title))
         rset = self._cw.execute(self.rql)
         if rset.rowcount > 0:
@@ -188,6 +196,8 @@ class SCHIIRDORGroupsManagementView(StartupView):
         self.w(add_etype_button(self._cw, "CWGroup"))
         self.w(u"<div class='clear'></div>")
         self.wview('shiirdor.groups-table', self._cw.execute(self.rql))
+
+
 
 
 class SCHIIRDORImportView(StartupView):

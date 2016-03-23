@@ -18,16 +18,13 @@ from cubicweb.server.sources.ldapfeed import LDAPFeedSource
 
 # Cubes import
 from cubes.schiirdor.migration.update_sources import _create_or_update_ldap_data_source
-from cubes.schiirdor.migration.update_sources import _DESTINATION_LDAP_ATTRIBUTES
-from cubes.schiirdor.migration.update_sources import _SOURCE_LDAP_ATTRIBUTES
 from cubes.trustedauth.cryptutils import build_cypher
-from cubes.trustedauth.authplugin import XRemoteUserAuthentifier
+from cubes.schiirdor.ldapfeed import LDAPConnection
 
 
-# Desacitvate ldap sources
-LDAPFeedSource.disabled = True
 # Define key entry
 KEYCONFENTRY = "registration-cypher-seed"
+KEYDISABLEENTRY = "disable-ldapfeed"
 
 
 class InGroupHook(hook.Hook):
@@ -63,6 +60,9 @@ class ExternalAuthSourceHook(hook.Hook):
     0 < len(key) <= 32 is not specified.
     """
     __regid__ = "external-auth-source-hook"
+    src_name = "SCHIIRDOR_SOURCE"
+    src_rql = ("Any X, T, U, C Where X is CWSource, X name 'SCHIIRDOR_SOURCE', "
+               "X type T, X url U, X config C")
     events = ("server_startup", )
 
     def __call__(self):
@@ -93,6 +93,30 @@ class ExternalAuthSourceHook(hook.Hook):
         # Create or update source
         with self.repo.internal_cnx() as cnx:
             _create_or_update_ldap_data_source(cnx)
+
+        # Check if the source are active or not
+        if self.repo.vreg.config.get(KEYDISABLEENTRY, False):
+            LDAPFeedSource.disabled = True
+        # Update repository cache for source synchronization
+        else:
+            with self.repo.internal_cnx() as cnx:
+                rset = cnx.execute(self.src_rql)
+            if rset.rowcount != 1:
+                raise Exception("No resource attached to this RQL: "
+                                "{0}.".format(self.src_rql))
+            seid, stype, surl, sconfig = rset[0]
+            if stype != "ldapfeed":
+                raise Exception("Source '{0}' must be of 'ldapfeed' "
+                                "type.".format(self.src_name))
+            config = LDAPConnection.configure(
+                seid, self.src_name, stype, surl, sconfig, login, password)
+            with self.repo.internal_cnx() as cnx:
+                rset = cnx.execute("Any X WHERE X is CWGroup")
+                for egroup in rset.entities():
+                    if egroup.name in ["guests", "managers", "users", "owners"]:
+                        continue
+                    self.repo._extid_cache["cn={0},{1}".format(
+                        egroup.name, config["group-base-dn"])] = egroup.eid
 
 
 def set_secret(config, secretfile):

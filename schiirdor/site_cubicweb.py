@@ -20,5 +20,12 @@ options = (
       'help': 'Navigation bar logo',
       'group': 'schiirdor',
       'level': 2,
+      }),
+    ('disable-ldapfeed',
+     {'type' : 'yn',
+      'default': True,
+      'help': 'If true disable the CubicWeb LDAPFEED connection.',
+      'group': 'schiirdor',
+      'level': 3,
       })
 )

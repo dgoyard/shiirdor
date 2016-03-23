@@ -19,7 +19,7 @@ class SCHIIRDORIndexView(IndexView):
         """ Create the 'index' like page of our site that propose a
         registration form.
         """
-        self.w(u"<h1>Welcome to the registration system.</h1>")
+        self.w(u"<h1>Welcome to the management system.</h1>")
         #self.wview("registration")
 
 
