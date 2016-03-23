@@ -31,7 +31,8 @@ class SCHIIRDORSyncManagementView(StartupView):
     resource.
     """
     __regid__ = "schiirdor.sync-management"
-    __select__ = StartupView.__select__ & ~trust_authenticated()
+    __select__ = (StartupView.__select__ &
+                  match_user_groups("managers", "moderators"))
     title = _("Synchronize Users & Groups")
     cache_max_age = 0 # disable caching
     rql = ("Any F, S, UAA, L, USN, GN WHERE U is CWUser, "
@@ -127,7 +128,8 @@ class SCHIIRDORUserManagementView(StartupView):
     """ Manage user associated groups.
     """
     __regid__ = "schiirdor.users-management"
-    __select__ = StartupView.__select__ & ~trust_authenticated()
+    __select__ = (StartupView.__select__ &
+                  match_user_groups("managers", "moderators"))
     title = _("Manage User associated Groups")
     cache_max_age = 0 # disable caching
     rql = ("Any U,US,F,S,U,UAA,UDS, L,UAA,USN,UDSN ORDERBY L WHERE "
@@ -155,7 +157,8 @@ class SCHIIRDORUsersTable(EntityTableView):
     """ Display a table with the user information to be managed.
     """
     __regid__ = "schiirdor.users-table"
-    __select__ = is_instance("CWUser") & ~trust_authenticated()
+    __select__ = (is_instance("CWUser") &
+                  match_user_groups("managers", "moderators"))
     columns = ["user", "in_state", "firstname", "surname",
                "in_group", "primary_email", "cw_source"]
     finalvid = "editable-final"

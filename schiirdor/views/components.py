@@ -53,7 +53,7 @@ class ManagerManageButton(HeaderComponent):
     """
     __regid__ = "manager-manage"
     __select__ = (HeaderComponent.__select__ & authenticated_user() &
-                  ~trust_authenticated())
+                  match_user_groups("managers", "moderators"))
     context = "header-right"
 
     def render(self, w):
@@ -70,7 +70,7 @@ class ManagerSyncButton(HeaderComponent):
     """
     __regid__ = "manager-sync"
     __select__ = (HeaderComponent.__select__ & authenticated_user() &
-                  ~trust_authenticated())
+                  match_user_groups("managers", "moderators"))
     context = "header-right"
 
     def render(self, w):
@@ -81,8 +81,8 @@ class ManagerSyncButton(HeaderComponent):
           "</a>".format(_(" Sync")))
 
 
-class AdminStatusButton(HeaderComponent):
-    """ Build a status button displayed in the header.
+class AdminGroupButton(HeaderComponent):
+    """ Build a create group button displayed in the header.
     Only the managers have accessed to this functionality.
     """
     __regid__ = "admin-status"
@@ -168,7 +168,7 @@ def render(self, w):
 
 def registration_callback(vreg):
 
-    for bclass in [AnonRegisterButton, ManagerManageButton, AdminStatusButton,
+    for bclass in [AnonRegisterButton, ManagerManageButton, AdminGroupButton,
                    LogOutButton, ManagerSyncButton, AdminImportButton]:
         vreg.register(bclass)
 
