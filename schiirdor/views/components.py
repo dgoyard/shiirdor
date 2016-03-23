@@ -52,7 +52,7 @@ class ManagerManageButton(HeaderComponent):
     Only administrators and moderators will see this button.
     """
     __regid__ = "manager-manage"
-    __select__ = (HeaderComponent.__select__ & authenticated_user() &
+    __select__ = (HeaderComponent.__select__ &
                   match_user_groups("managers", "moderators"))
     context = "header-right"
 
@@ -69,7 +69,7 @@ class ManagerSyncButton(HeaderComponent):
     Only administrators and moderators will see this button.
     """
     __regid__ = "manager-sync"
-    __select__ = (HeaderComponent.__select__ & authenticated_user() &
+    __select__ = (HeaderComponent.__select__ &
                   match_user_groups("managers", "moderators"))
     context = "header-right"
 
@@ -86,7 +86,7 @@ class AdminGroupButton(HeaderComponent):
     Only the managers have accessed to this functionality.
     """
     __regid__ = "admin-status"
-    __select__ = (HeaderComponent.__select__ & authenticated_user() &
+    __select__ = (HeaderComponent.__select__ &
                   match_user_groups("managers"))
     context = "header-right"
 
