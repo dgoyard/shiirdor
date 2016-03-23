@@ -27,5 +27,12 @@ options = (
       'help': 'If true disable the CubicWeb LDAPFEED connection.',
       'group': 'schiirdor',
       'level': 3,
+      }),
+    ('restricted-groups',
+     {'type' : 'csv',
+      'default': 'managers,users,guests,moderators',
+      'help': 'A list of groups the moderators cannot administrate.',
+      'group': 'schiirdor',
+      'level': 4,
       })
 )

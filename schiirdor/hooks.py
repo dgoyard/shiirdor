@@ -44,11 +44,11 @@ class InGroupHook(hook.Hook):
         parent = self._cw.entity_from_eid(self.eidto)
         child = self._cw.entity_from_eid(self.eidfrom)
         group_name = parent.name
-        moderator_name = child.firstname + " " + child.surname
-        if group_name in ["managers", "users", "guests", "moderators"]:
+        user_name = child.firstname + " " + child.surname
+        if group_name in self._cw.vreg.config.get("restricted-groups", []):
             raise ConfigurationError(
-                "%s you do not have sufficient permissions to administrate "
-                "the '%s' group." % (moderator_name, group_name))
+                "You do not have sufficient permissions to administrate '%s' "
+                "in the '%s' group." % (user_name, group_name))
 
 
 class ExternalAuthSourceHook(hook.Hook):

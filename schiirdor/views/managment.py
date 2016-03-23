@@ -201,8 +201,6 @@ class SCHIIRDORGroupsManagementView(StartupView):
         self.wview('shiirdor.groups-table', self._cw.execute(self.rql))
 
 
-
-
 class SCHIIRDORImportView(StartupView):
     """ Import users and groups from the 'SCHIIRDOR_DESTINATION' ldap resource.
 
