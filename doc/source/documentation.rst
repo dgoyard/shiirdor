@@ -48,6 +48,12 @@ Documentation of the 'PIWS' cube
                     </blockquote>
                 </div>
 
+                <div class="span4 box">
+                    <h2><a href="ldapfeed.html">LDAPFeed</a></h2>
+                    <blockquote>The connection procedure to a ldap source.
+                    </blockquote>
+                </div>
+
             </div>
 
 
