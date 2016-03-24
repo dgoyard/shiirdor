@@ -44,7 +44,10 @@ class InGroupHook(hook.Hook):
         parent = self._cw.entity_from_eid(self.eidto)
         child = self._cw.entity_from_eid(self.eidfrom)
         group_name = parent.name
-        user_name = child.firstname + " " + child.surname
+        if child.firstname is None or child.surname is None:
+            user_name = child.login
+        else:
+            user_name = child.firstname + " " + child.surname
         if group_name in self._cw.vreg.config.get("restricted-groups", []):
             raise ConfigurationError(
                 "You do not have sufficient permissions to administrate '%s' "
