@@ -9,6 +9,8 @@
 # System import
 import collections
 import base64
+import re
+import json
 
 # CubicWeb import
 from cubicweb import tags
@@ -19,6 +21,10 @@ from cubicweb.web.views.tableview import MainEntityColRenderer
 from cubicweb.predicates import match_user_groups
 from cubicweb.predicates import is_instance
 from cubicweb.web.views import add_etype_button
+from cubicweb.web.views.ajaxcontroller import ajaxfunc
+from cubicweb.web.views.reledit import reledit_form as cw_reledit_form
+from cubicweb.web.views.reledit import AutoClickAndEditFormView
+from logilab.common.decorators import monkeypatch
 
 # Cubes import
 from .predicates import trust_authenticated
@@ -139,18 +145,54 @@ class SCHIIRDORUserManagementView(StartupView):
            "U cw_source UDS, US name UDSN")
 
     def call(self, **kwargs):
-        # Add a div around the selector
-        self.w(u"<script>")
-        self.w(u"$( \"select[id^='from_in_group-subject']\" ).wrap("
-                "\"<div class='schiirdor-manage-groups'></div>\");")
-        self.w(u"</script>")
-
         self.w(u"<h1>{0}</h1>".format(self.title))
         rset = self._cw.execute(self.rql)
         if rset.rowcount > 0:
             self.wview("schiirdor.users-table", rset)
         else:
             self.w(u"No user to manage.".format(self.title))
+
+
+@monkeypatch(AutoClickAndEditFormView)
+def _compute_formid_value(self, rschema, role, rvid, formid):
+    """  Filter the user associed groups that will be displayed in the edit view.
+    """
+    if self.entity.__class__.__name__ == "CWUser" and rschema == "in_group":
+        restriction = tuple(self._cw.vreg.config["restricted-groups"])
+        related_rset = self._cw.session.execute(
+            "Any G Where U eid '{0}', U in_group G, NOT G name IN {1}".format(
+                self.entity.eid, repr(restriction)))
+    else:
+        related_rset = self.entity.related(rschema.type, role)
+    if related_rset:
+        value = self._cw.view(rvid, related_rset)
+    else:
+        value = self._compute_default_value(rschema, role)
+    if not self._should_edit_relation(rschema, role):
+        return None, value
+    return formid, value
+
+
+@ajaxfunc(output_type="xhtml")
+def reledit_form(self):
+    """ Filter the groups that will be displayed in the edit view.
+    """
+    req = self._cw
+    args = dict((x, req.form[x])
+                for x in ('formid', 'rtype', 'role', 'reload', 'action'))
+    rset = req.eid_rset(int(self._cw.form['eid']))
+    try:
+        args['reload'] = json.loads(args['reload'])
+    except ValueError: # not true/false, an absolute url
+        assert args['reload'].startswith('http')
+    view = req.vreg['views'].select('reledit', req, rset=rset, rtype=args['rtype'])
+
+    html = self._call_view(view, **args)
+    for name in req.vreg.config["restricted-groups"]:
+        regex = '<option value="[0-9]*">{1}.*</option>'.format(self._cw.form['eid'], name)
+        html = re.sub(regex, "", html)
+    
+    return html
 
 
 class SCHIIRDORUsersTable(EntityTableView):
@@ -323,3 +365,13 @@ class SCHIIRDORAdminUsersTable(EntityTableView):
     column_renderers = {
         "user": MainEntityColRenderer(),
     }
+
+
+def registration_callback(vreg):
+    
+    for klass in [SCHIIRDORSyncManagementView, SCHIIRDORUserManagementView,
+                  SCHIIRDORUsersTable, SCHIIRDORGroupsManagementView,
+                  SCHIIRDORImportView, SCHIIRDORGroupsTable,
+                  SCHIIRDORAdminUsersManagementView, SCHIIRDORAdminUsersTable]:
+        vreg.register(klass)
+    vreg.register_and_replace(reledit_form, cw_reledit_form)
