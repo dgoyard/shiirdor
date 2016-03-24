@@ -157,7 +157,8 @@ class SCHIIRDORUserManagementView(StartupView):
 def _compute_formid_value(self, rschema, role, rvid, formid):
     """  Filter the user associed groups that will be displayed in the edit view.
     """
-    if self.entity.__class__.__name__ == "CWUser" and rschema == "in_group":
+    if (self.entity.__class__.__name__ == "CWUser" and rschema == "in_group"
+            and "managers" not in [grp.name for grp in self._cw.user.in_group]):
         restriction = tuple(self._cw.vreg.config["restricted-groups"])
         related_rset = self._cw.session.execute(
             "Any G Where U eid '{0}', U in_group G, NOT G name IN {1}".format(
@@ -188,9 +189,11 @@ def reledit_form(self):
     view = req.vreg['views'].select('reledit', req, rset=rset, rtype=args['rtype'])
 
     html = self._call_view(view, **args)
-    for name in req.vreg.config["restricted-groups"]:
-        regex = '<option value="[0-9]*">{1}.*</option>'.format(self._cw.form['eid'], name)
-        html = re.sub(regex, "", html)
+    if "managers" not in [grp.name for grp in self._cw.user.in_group]:
+        for name in req.vreg.config["restricted-groups"]:
+            regex = '<option value="[0-9]*">{1}.*</option>'.format(
+                self._cw.form['eid'], name)
+            html = re.sub(regex, "", html)
     
     return html
 
